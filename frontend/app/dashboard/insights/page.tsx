@@ -81,18 +81,30 @@ export default function InsightsPage() {
     if (!selectedInsight) return;
 
     try {
-      // Prepare data for PDF
+      // Prepare data for PDF using correct HealthInsight properties
       const insightData = {
-        symptomName: selectedInsight.symptomId || "General Health",
-        severity: selectedInsight.severity || 5,
+        symptomName: selectedInsight.title || "Health Insight",
+        severity:
+          selectedInsight.severity === "critical"
+            ? 10
+            : selectedInsight.severity === "high"
+            ? 7
+            : selectedInsight.severity === "medium"
+            ? 5
+            : 3,
         insights: {
-          possibleCauses: selectedInsight.possibleCauses || [],
-          riskAssessment:
-            selectedInsight.riskAssessment || "No risk assessment available",
-          recommendations: selectedInsight.recommendations || [],
-          urgencyLevel: selectedInsight.urgencyLevel || "NON_URGENT",
+          possibleCauses: [selectedInsight.description],
+          riskAssessment: `${selectedInsight.insightType.toUpperCase()} - ${selectedInsight.severity.toUpperCase()} severity (${Math.round(
+            selectedInsight.confidence * 100
+          )}% confidence)`,
+          recommendations: selectedInsight.recommendations,
+          urgencyLevel:
+            selectedInsight.severity === "critical"
+              ? "EMERGENCY"
+              : selectedInsight.severity === "high"
+              ? "URGENT"
+              : "NON_URGENT",
           disclaimer:
-            selectedInsight.disclaimer ||
             "This is AI-generated information and should not replace professional medical advice.",
         },
       };
