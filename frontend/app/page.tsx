@@ -1,32 +1,63 @@
+"use client";
+
 import Link from "next/link";
+import { useTheme } from "@/lib/theme/theme-context";
+import Button3D from "@/components/ui/Button3D";
 
 export default function HomePage() {
+  const { theme, toggleTheme } = useTheme();
+
   return (
-    <div className="min-h-screen bg-linear-to-br from-blue-50 via-white to-indigo-50">
+    <div
+      className="min-h-screen transition-colors duration-200"
+      style={{ background: theme === "dark" ? "#0a0b0f" : "#fffef9" }}
+    >
       {/* Header */}
-      <header className="bg-white/80 backdrop-blur-md border-b border-gray-200 sticky top-0 z-50 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      <header
+        className="sticky top-0 z-50 transition-colors duration-200"
+        style={{
+          background: theme === "dark" ? "#1a1d29" : "#ffffff",
+          borderBottom:
+            theme === "dark" ? "3px solid #2d3748" : "3px solid #242622",
+        }}
+      >
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-4 lg:py-5">
           <div className="flex justify-between items-center">
-            <div className="flex items-center gap-3">
-              <div className="w-11 h-11 bg-linear-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
-                <span className="text-white text-2xl font-bold">+</span>
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div
+                className="w-9 h-9 sm:w-10 sm:h-10 lg:w-12 lg:h-12 rounded-lg sm:rounded-xl flex items-center justify-center"
+                style={{
+                  background: "rgb(147, 197, 253)",
+                  border: "2px solid #242622",
+                }}
+              >
+                <span
+                  className="text-lg sm:text-xl lg:text-2xl font-bold"
+                  style={{ color: "rgb(30, 58, 138)" }}
+                >
+                  +
+                </span>
               </div>
-              <h1 className="text-xl font-bold bg-linear-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
-                Symptom Tracker
+              <h1
+                className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold transition-colors duration-200"
+                style={{ color: theme === "dark" ? "#e5e7eb" : "#242622" }}
+              >
+                <span className="hidden xs:inline">Symptom Tracker</span>
+                <span className="xs:hidden">ST</span>
               </h1>
             </div>
-            <div className="flex gap-3">
-              <Link
-                href="/auth/login"
-                className="px-5 py-2.5 text-blue-600 hover:text-blue-700 font-semibold hover:bg-blue-50 rounded-xl transition-all"
-              >
-                Sign In
+            <div className="flex gap-2 sm:gap-3">
+              <Link href="/auth/login">
+                <Button3D variant="white" size="sm">
+                  <span className="hidden sm:inline">Sign In</span>
+                  <span className="sm:hidden">→</span>
+                </Button3D>
               </Link>
-              <Link
-                href="/auth/register"
-                className="px-6 py-2.5 bg-linear-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 font-semibold shadow-md hover:shadow-lg transition-all duration-300"
-              >
-                Get Started
+              <Link href="/auth/register">
+                <Button3D variant="blue" size="sm">
+                  <span className="hidden sm:inline">Get Started</span>
+                  <span className="sm:hidden">Start</span>
+                </Button3D>
               </Link>
             </div>
           </div>
@@ -34,81 +65,142 @@ export default function HomePage() {
       </header>
 
       {/* Hero Section */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
+      <main className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-10 sm:py-16 md:py-20 lg:py-32">
         <div className="text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-100 rounded-full text-blue-700 font-semibold text-sm mb-6">
-            <span className="text-lg">🤖</span>
-            AI-Powered Health Assistant
-          </div>
-          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold text-gray-900 leading-tight">
-            Smart Symptom Log &<br />
-            <span className="bg-linear-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-              Triage Assistant
+          <div
+            className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 md:px-5 py-2 sm:py-2.5 rounded-full text-xs sm:text-sm font-bold mb-4 sm:mb-6 md:mb-8"
+            style={{
+              background: "rgb(219, 234, 254)",
+              color: "rgb(30, 58, 138)",
+              border: "2px solid #242622",
+            }}
+          >
+            <span className="text-sm sm:text-base">🤖</span>
+            <span className="hidden sm:inline">
+              AI-Powered Health Assistant
             </span>
+            <span className="sm:hidden">AI Health Assistant</span>
+          </div>
+          <h1
+            className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold leading-tight tracking-tight"
+            style={{ color: "#242622" }}
+          >
+            Smart Symptom Log &<br />
+            <span style={{ color: "rgb(59, 130, 246)" }}>Triage Assistant</span>
           </h1>
-          <p className="mt-6 text-xl sm:text-2xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+          <p
+            className="mt-4 sm:mt-5 md:mt-6 text-sm sm:text-base md:text-lg lg:text-xl max-w-xs sm:max-w-md md:max-w-lg lg:max-w-2xl mx-auto leading-relaxed px-2"
+            style={{ color: "#525252", fontWeight: 500 }}
+          >
             Track your health symptoms intelligently, get AI-powered triage
             assessments, and make informed decisions about when to seek medical
             care.
           </p>
-          <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              href="/auth/register"
-              className="group px-8 py-4 bg-linear-to-r from-blue-600 to-indigo-600 text-white text-lg rounded-2xl hover:from-blue-700 hover:to-indigo-700 font-bold shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105"
-            >
-              <span className="flex items-center justify-center gap-2">
-                Start Tracking Free
-                <span className="group-hover:translate-x-1 transition-transform">
-                  →
+          <div className="mt-6 sm:mt-8 md:mt-10 flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4 sm:px-0">
+            <Link href="/auth/register" className="w-full sm:w-auto">
+              <Button3D variant="blue" size="lg" fullWidth>
+                <span className="flex items-center justify-center gap-2">
+                  Start Tracking Free
+                  <span>→</span>
                 </span>
-              </span>
+              </Button3D>
             </Link>
-            <Link
-              href="/auth/login"
-              className="px-8 py-4 bg-white text-blue-600 text-lg rounded-2xl hover:bg-gray-50 font-bold border-2 border-blue-600 transition-all duration-300 shadow-lg hover:shadow-xl"
-            >
-              Sign In
+            <Link href="/auth/login" className="w-full sm:w-auto">
+              <Button3D variant="white" size="lg" fullWidth>
+                Sign In
+              </Button3D>
             </Link>
           </div>
         </div>
 
         {/* Features */}
-        <div className="mt-24 grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div className="group bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100 hover:scale-105">
-            <div className="w-14 h-14 bg-linear-to-br from-blue-100 to-blue-200 rounded-xl flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
-              <span className="text-3xl">📊</span>
+        <div className="mt-12 sm:mt-16 md:mt-20 lg:mt-24 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
+          <div
+            className="bg-white p-5 sm:p-6 md:p-8 rounded-xl transition-all hover:-translate-y-1"
+            style={{
+              border: "3px solid #242622",
+              boxShadow: "4px 4px 0px #242622",
+            }}
+          >
+            <div
+              className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center mb-4 sm:mb-5"
+              style={{
+                background: "rgb(219, 234, 254)",
+                border: "2px solid #242622",
+              }}
+            >
+              <span className="text-2xl sm:text-3xl">📊</span>
             </div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-3">
+            <h3
+              className="text-lg sm:text-xl font-bold mb-2 sm:mb-3"
+              style={{ color: "#242622" }}
+            >
               Smart Symptom Logging
             </h3>
-            <p className="text-gray-600 leading-relaxed">
+            <p
+              className="leading-relaxed text-sm sm:text-base"
+              style={{ color: "#525252", fontWeight: 500 }}
+            >
               Track symptoms with detailed information including severity,
               location, and characteristics. Build a comprehensive health
               timeline.
             </p>
           </div>
 
-          <div className="group bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100 hover:scale-105">
-            <div className="w-14 h-14 bg-linear-to-br from-green-100 to-green-200 rounded-xl flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
-              <span className="text-3xl">🏥</span>
+          <div
+            className="bg-white p-5 sm:p-6 md:p-8 rounded-xl transition-all hover:-translate-y-1"
+            style={{
+              border: "3px solid #242622",
+              boxShadow: "4px 4px 0px #242622",
+            }}
+          >
+            <div
+              className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center mb-4 sm:mb-5"
+              style={{
+                background: "rgb(187, 247, 208)",
+                border: "2px solid #242622",
+              }}
+            >
+              <span className="text-2xl sm:text-3xl">🏥</span>
             </div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-3">
+            <h3
+              className="text-lg sm:text-xl font-bold mb-2 sm:mb-3"
+              style={{ color: "#242622" }}
+            >
               Intelligent Triage
             </h3>
-            <p className="text-gray-600 leading-relaxed">
+            <p
+              className="leading-relaxed text-sm sm:text-base"
+              style={{ color: "#525252", fontWeight: 500 }}
+            >
               Get instant urgency assessments with actionable recommendations on
               whether you need emergency care, urgent care, or self-care.
             </p>
           </div>
 
-          <div className="group bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100 hover:scale-105">
-            <div className="w-14 h-14 bg-linear-to-br from-purple-100 to-purple-200 rounded-xl flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
-              <span className="text-3xl">🤖</span>
+          <div
+            className="bg-white p-5 sm:p-6 md:p-8 rounded-xl transition-all hover:-translate-y-1 sm:col-span-2 lg:col-span-1"
+            style={{
+              border: "3px solid #242622",
+              boxShadow: "4px 4px 0px #242622",
+            }}
+          >
+            <div
+              className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center mb-4 sm:mb-5"
+              style={{
+                background: "rgb(233, 213, 255)",
+                border: "2px solid #242622",
+              }}
+            >
+              <span className="text-2xl sm:text-3xl">🤖</span>
             </div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-3">
+            <h3 className="text-xl font-bold mb-3" style={{ color: "#242622" }}>
               AI Pattern Recognition
             </h3>
-            <p className="text-gray-600 leading-relaxed">
+            <p
+              className="leading-relaxed"
+              style={{ color: "#525252", fontWeight: 500 }}
+            >
               Advanced AI analyzes symptom patterns, identifies triggers, and
               generates comprehensive health insights for better care.
             </p>
@@ -118,10 +210,16 @@ export default function HomePage() {
         {/* How it Works */}
         <div className="mt-32">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">
+            <h2
+              className="text-4xl font-bold mb-3"
+              style={{ color: "#242622" }}
+            >
               How It Works
             </h2>
-            <p className="text-xl text-gray-600">
+            <p
+              className="text-lg"
+              style={{ color: "#525252", fontWeight: 500 }}
+            >
               Simple, fast, and intelligent
             </p>
           </div>
@@ -152,38 +250,37 @@ export default function HomePage() {
                 icon: "📈",
               },
             ].map((item) => (
-              <div key={item.step} className="text-center group">
+              <div key={item.step} className="text-center">
                 <div className="relative mb-6">
-                  <div className="w-20 h-20 bg-linear-to-br from-blue-600 to-indigo-600 text-white rounded-2xl flex items-center justify-center text-3xl font-bold mx-auto shadow-xl group-hover:scale-110 transition-transform">
+                  <div className="w-16 h-16 bg-blue-600 text-white rounded-lg flex items-center justify-center text-2xl font-bold mx-auto">
                     {item.step}
                   </div>
-                  <div className="absolute -top-2 -right-2 w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-lg border-2 border-blue-100">
+                  <div className="absolute -top-2 -right-1/4 w-10 h-10 bg-white rounded-full flex items-center justify-center border-2 border-gray-200">
                     <span className="text-xl">{item.icon}</span>
                   </div>
                 </div>
-                <h3 className="font-bold text-xl text-gray-900 mb-2">
+                <h3 className="font-semibold text-lg text-gray-900 mb-2">
                   {item.title}
                 </h3>
-                <p className="text-gray-600">{item.desc}</p>
+                <p className="text-gray-600 text-sm">{item.desc}</p>
               </div>
             ))}
           </div>
         </div>
 
         {/* CTA */}
-        <div className="mt-32 bg-linear-to-r from-blue-600 via-indigo-600 to-purple-600 rounded-3xl p-12 sm:p-16 text-center shadow-2xl relative overflow-hidden">
-          <div className="absolute inset-0 bg-grid-white/10"></div>
+        <div className="mt-32 bg-blue-600 rounded-lg p-12 sm:p-16 text-center">
           <div className="relative z-10">
             <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
               Ready to Take Control of Your Health?
             </h2>
-            <p className="text-blue-100 text-lg sm:text-xl mb-8 max-w-2xl mx-auto">
+            <p className="text-blue-100 text-base sm:text-lg mb-8 max-w-2xl mx-auto">
               Join thousands of users who trust our smart symptom tracking
               system to make better healthcare decisions.
             </p>
             <Link
               href="/auth/register"
-              className="inline-flex items-center gap-2 px-8 py-4 bg-white text-blue-600 text-lg rounded-2xl hover:bg-gray-50 font-bold shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105"
+              className="inline-flex items-center gap-2 px-8 py-4 bg-white text-blue-600 text-base font-medium rounded-lg hover:bg-gray-50 transition-colors"
             >
               Get Started Now - It's Free
               <span className="text-xl">→</span>
@@ -193,9 +290,9 @@ export default function HomePage() {
       </main>
 
       {/* Footer */}
-      <footer className="bg-gray-50/80 backdrop-blur-sm border-t border-gray-200 mt-24">
+      <footer className="bg-white border-t border-gray-200 mt-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-center">
-          <p className="text-gray-600">
+          <p className="text-gray-600 text-sm">
             © 2025 Smart Symptom Log & Triage Assistant. For informational
             purposes only. Not a substitute for professional medical advice.
           </p>

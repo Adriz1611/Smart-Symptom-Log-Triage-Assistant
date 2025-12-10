@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { symptomApi } from "@/lib/api/symptoms";
 import { Symptom } from "@/lib/types";
+import { useTheme } from "@/lib/theme/theme-context";
+import Button3D from "@/components/ui/Button3D";
 
 export default function EditSymptomPage() {
   const params = useParams();
@@ -126,10 +128,12 @@ export default function EditSymptomPage() {
 
   if (fetchLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-screen px-4">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading symptom...</p>
+          <div className="w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="mt-3 sm:mt-4 text-gray-600 text-sm sm:text-base">
+            Loading symptom...
+          </p>
         </div>
       </div>
     );
@@ -137,50 +141,59 @@ export default function EditSymptomPage() {
 
   if (error && !symptom) {
     return (
-      <div className="max-w-4xl mx-auto p-6">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-red-800">{error}</p>
-          <button
-            onClick={() => router.push("/dashboard")}
-            className="mt-4 text-blue-600 hover:underline"
-          >
-            ← Back to Dashboard
-          </button>
+      <div className="max-w-4xl mx-auto p-3 sm:p-4 md:p-6">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-3 sm:p-4">
+          <p className="text-red-800 text-sm sm:text-base">{error}</p>
+          <div className="mt-3 sm:mt-4">
+            <Button3D
+              variant="white"
+              size="sm"
+              onClick={() => router.push("/dashboard")}
+            >
+              <span className="text-xs sm:text-sm">← Back</span>
+            </Button3D>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-8">
-        <button
-          onClick={() => router.push(`/dashboard/symptoms/${params.id}`)}
-          className="text-blue-600 hover:text-blue-700 font-medium mb-4"
-        >
-          ← Back to Symptom Details
-        </button>
-        <h1 className="text-3xl font-bold text-gray-900">Edit Symptom</h1>
-        <p className="text-gray-600 mt-2">
+    <div className="max-w-3xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
+      <div className="mb-4 sm:mb-6 md:mb-8">
+        <div className="mb-3 sm:mb-4">
+          <Button3D
+            variant="white"
+            size="sm"
+            onClick={() => router.push(`/dashboard/symptoms/${params.id}`)}
+          >
+            <span className="text-xs sm:text-sm">← Back</span>
+          </Button3D>
+        </div>
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">
+          Edit Symptom
+        </h1>
+        <p className="text-gray-600 mt-1.5 sm:mt-2 text-sm sm:text-base">
           Update symptom information and status
         </p>
       </div>
 
       {error && (
-        <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
+        <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm sm:text-base">
           {error}
         </div>
       )}
 
       <form
         onSubmit={handleSubmit}
-        className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-6"
+        className="bg-white rounded-lg sm:rounded-xl shadow-sm border-2 border-gray-800 p-4 sm:p-5 md:p-6 space-y-4 sm:space-y-5 md:space-y-6"
+        style={{ boxShadow: "4px 4px 0px #242622" }}
       >
         {/* Symptom Name */}
         <div>
           <label
             htmlFor="symptomName"
-            className="block text-sm font-medium text-gray-700 mb-2"
+            className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2"
           >
             Symptom Name *
           </label>
@@ -192,7 +205,7 @@ export default function EditSymptomPage() {
             onChange={(e) =>
               setFormData({ ...formData, symptomName: e.target.value })
             }
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border-2 border-gray-800 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder:text-gray-400 text-sm sm:text-base"
             placeholder="e.g., Headache, Fever, Chest pain"
           />
         </div>
@@ -201,7 +214,7 @@ export default function EditSymptomPage() {
         <div>
           <label
             htmlFor="bodyLocation"
-            className="block text-sm font-medium text-gray-700 mb-2"
+            className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2"
           >
             Body Location
           </label>
@@ -212,7 +225,7 @@ export default function EditSymptomPage() {
             onChange={(e) =>
               setFormData({ ...formData, bodyLocation: e.target.value })
             }
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border-2 border-gray-800 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder:text-gray-400 text-sm sm:text-base"
             placeholder="e.g., Head, Chest, Abdomen"
           />
         </div>
@@ -221,7 +234,7 @@ export default function EditSymptomPage() {
         <div>
           <label
             htmlFor="status"
-            className="block text-sm font-medium text-gray-700 mb-2"
+            className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2"
           >
             Status *
           </label>
@@ -234,7 +247,7 @@ export default function EditSymptomPage() {
                 status: e.target.value as typeof formData.status,
               })
             }
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border-2 border-gray-800 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder:text-gray-400 text-sm sm:text-base"
           >
             <option value="ACTIVE">Active</option>
             <option value="IMPROVING">Improving</option>
@@ -248,7 +261,7 @@ export default function EditSymptomPage() {
         <div>
           <label
             htmlFor="severity"
-            className="block text-sm font-medium text-gray-700 mb-2"
+            className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2"
           >
             Severity: {formData.severity}/10 *
           </label>
@@ -263,7 +276,7 @@ export default function EditSymptomPage() {
             }
             className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
           />
-          <div className="flex justify-between text-xs text-gray-500 mt-1">
+          <div className="flex justify-between text-[10px] sm:text-xs text-gray-500 mt-1">
             <span>1 (Mild)</span>
             <span>5 (Moderate)</span>
             <span>10 (Severe)</span>
@@ -274,7 +287,7 @@ export default function EditSymptomPage() {
         <div>
           <label
             htmlFor="characteristic"
-            className="block text-sm font-medium text-gray-700 mb-2"
+            className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2"
           >
             Characteristic
           </label>
@@ -284,7 +297,7 @@ export default function EditSymptomPage() {
             onChange={(e) =>
               setFormData({ ...formData, characteristic: e.target.value })
             }
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border-2 border-gray-800 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder:text-gray-400 text-sm sm:text-base"
           >
             <option value="">Select...</option>
             <option value="sharp">Sharp</option>
@@ -300,7 +313,7 @@ export default function EditSymptomPage() {
         <div>
           <label
             htmlFor="frequency"
-            className="block text-sm font-medium text-gray-700 mb-2"
+            className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2"
           >
             Frequency
           </label>
@@ -310,7 +323,7 @@ export default function EditSymptomPage() {
             onChange={(e) =>
               setFormData({ ...formData, frequency: e.target.value })
             }
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border-2 border-gray-800 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder:text-gray-400 text-sm sm:text-base"
           >
             <option value="">Select...</option>
             <option value="constant">Constant</option>
@@ -324,9 +337,9 @@ export default function EditSymptomPage() {
         <div>
           <label
             htmlFor="triggers"
-            className="block text-sm font-medium text-gray-700 mb-2"
+            className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2"
           >
-            Triggers (comma-separated)
+            Triggers <span className="hidden xs:inline">(comma-separated)</span>
           </label>
           <input
             id="triggers"
@@ -335,8 +348,8 @@ export default function EditSymptomPage() {
             onChange={(e) =>
               setFormData({ ...formData, triggers: e.target.value })
             }
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder="e.g., stress, lack of sleep, certain foods"
+            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border-2 border-gray-800 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder:text-gray-400 text-sm sm:text-base"
+            placeholder="e.g., stress, lack of sleep"
           />
         </div>
 
@@ -344,9 +357,10 @@ export default function EditSymptomPage() {
         <div>
           <label
             htmlFor="alleviatingFactors"
-            className="block text-sm font-medium text-gray-700 mb-2"
+            className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2"
           >
-            Alleviating Factors (comma-separated)
+            Alleviating{" "}
+            <span className="hidden xs:inline">Factors (comma-separated)</span>
           </label>
           <input
             id="alleviatingFactors"
@@ -355,8 +369,8 @@ export default function EditSymptomPage() {
             onChange={(e) =>
               setFormData({ ...formData, alleviatingFactors: e.target.value })
             }
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder="e.g., rest, medication, cold compress"
+            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border-2 border-gray-800 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder:text-gray-400 text-sm sm:text-base"
+            placeholder="e.g., rest, medication"
           />
         </div>
 
@@ -364,9 +378,10 @@ export default function EditSymptomPage() {
         <div>
           <label
             htmlFor="aggravatingFactors"
-            className="block text-sm font-medium text-gray-700 mb-2"
+            className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2"
           >
-            Aggravating Factors (comma-separated)
+            Aggravating{" "}
+            <span className="hidden xs:inline">Factors (comma-separated)</span>
           </label>
           <input
             id="aggravatingFactors"
@@ -375,19 +390,19 @@ export default function EditSymptomPage() {
             onChange={(e) =>
               setFormData({ ...formData, aggravatingFactors: e.target.value })
             }
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder="e.g., movement, bright lights, noise"
+            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border-2 border-gray-800 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder:text-gray-400 text-sm sm:text-base"
+            placeholder="e.g., movement, bright lights"
           />
         </div>
 
         {/* Vital Signs */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
           <div>
             <label
               htmlFor="temperature"
-              className="block text-sm font-medium text-gray-700 mb-2"
+              className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2"
             >
-              Temperature (°F)
+              Temp (°F)
             </label>
             <input
               id="temperature"
@@ -397,16 +412,16 @@ export default function EditSymptomPage() {
               onChange={(e) =>
                 setFormData({ ...formData, temperature: e.target.value })
               }
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border-2 border-gray-800 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder:text-gray-400 text-sm sm:text-base"
               placeholder="98.6"
             />
           </div>
           <div>
             <label
               htmlFor="heartRate"
-              className="block text-sm font-medium text-gray-700 mb-2"
+              className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2"
             >
-              Heart Rate (bpm)
+              HR (bpm)
             </label>
             <input
               id="heartRate"
@@ -415,16 +430,16 @@ export default function EditSymptomPage() {
               onChange={(e) =>
                 setFormData({ ...formData, heartRate: e.target.value })
               }
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border-2 border-gray-800 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder:text-gray-400 text-sm sm:text-base"
               placeholder="70"
             />
           </div>
           <div>
             <label
               htmlFor="bloodPressure"
-              className="block text-sm font-medium text-gray-700 mb-2"
+              className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2"
             >
-              Blood Pressure
+              BP
             </label>
             <input
               id="bloodPressure"
@@ -433,7 +448,7 @@ export default function EditSymptomPage() {
               onChange={(e) =>
                 setFormData({ ...formData, bloodPressure: e.target.value })
               }
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border-2 border-gray-800 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder:text-gray-400 text-sm sm:text-base"
               placeholder="120/80"
             />
           </div>
@@ -443,38 +458,44 @@ export default function EditSymptomPage() {
         <div>
           <label
             htmlFor="notes"
-            className="block text-sm font-medium text-gray-700 mb-2"
+            className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2"
           >
             Additional Notes
           </label>
           <textarea
             id="notes"
-            rows={4}
+            rows={3}
             value={formData.notes}
             onChange={(e) =>
               setFormData({ ...formData, notes: e.target.value })
             }
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder="Any additional details, triggers, or context..."
+            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border-2 border-gray-800 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder:text-gray-400 text-sm sm:text-base"
+            placeholder="Any additional details..."
           />
         </div>
 
         {/* Submit Button */}
-        <div className="pt-4 flex gap-4">
-          <button
+        <div className="pt-2 sm:pt-4 grid grid-cols-2 gap-2 sm:gap-3 md:gap-4">
+          <Button3D
             type="button"
+            variant="white"
+            size="lg"
             onClick={() => router.push(`/dashboard/symptoms/${params.id}`)}
-            className="flex-1 bg-gray-200 text-gray-700 py-3 px-4 rounded-lg font-semibold hover:bg-gray-300 transition"
+            fullWidth
           >
-            Cancel
-          </button>
-          <button
+            <span className="text-sm sm:text-base">Cancel</span>
+          </Button3D>
+          <Button3D
             type="submit"
+            variant="blue"
+            size="lg"
             disabled={loading}
-            className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition"
+            fullWidth
           >
-            {loading ? "Updating..." : "Update Symptom"}
-          </button>
+            <span className="text-sm sm:text-base">
+              {loading ? "Updating..." : "Update"}
+            </span>
+          </Button3D>
         </div>
       </form>
     </div>

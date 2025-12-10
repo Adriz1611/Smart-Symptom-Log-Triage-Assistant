@@ -45,7 +45,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (credentials: LoginCredentials) => {
     try {
+      console.log("Attempting login with:", { email: credentials.email });
       const response = await authApi.login(credentials);
+      console.log("Login response:", response);
       if (response.success && response.data) {
         const { user, accessToken, refreshToken } = response.data;
         localStorage.setItem("accessToken", accessToken);
@@ -55,7 +57,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         router.push("/dashboard");
       }
     } catch (error: any) {
-      throw new Error(error.response?.data?.error || "Login failed");
+      console.error("Login error:", error);
+      console.error("Error response:", error.response);
+      const errorMessage =
+        error.response?.data?.error || error.message || "Login failed";
+      throw new Error(errorMessage);
     }
   };
 

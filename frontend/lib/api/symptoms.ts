@@ -31,4 +31,9 @@ export const symptomApi = {
     const response = await apiClient.get('/symptoms/timeline', { params });
     return response.data;
   },
+
+  seedSymptoms: async (): Promise<ApiResponse<{ count: number; dateRange: { start: string; end: string } }>> => {
+    const response = await apiClient.post('/symptoms/seed');
+    return response.data;
+  },
 };

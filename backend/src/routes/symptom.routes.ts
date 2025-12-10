@@ -30,6 +30,9 @@ router.post(
 // Get all symptoms
 router.get('/', SymptomController.getAll);
 
+// Seed symptoms for testing
+router.post('/seed', SymptomController.seedSymptoms);
+
 // Get timeline
 router.get('/timeline', SymptomController.getTimeline);
 

@@ -76,6 +76,7 @@ export class AuthController {
   static async login(req: AuthRequest, res: Response): Promise<void> {
     try {
       const { email, password }: LoginCredentials = req.body;
+      console.log('Login attempt for email:', email);
 
       // Find user
       const user = await prisma.user.findUnique({
@@ -83,6 +84,7 @@ export class AuthController {
       });
 
       if (!user) {
+        console.log('User not found:', email);
         res.status(401).json({
           success: false,
           error: 'Invalid credentials.',
@@ -90,10 +92,12 @@ export class AuthController {
         return;
       }
 
+      console.log('User found, verifying password...');
       // Verify password
       const isValidPassword = await bcrypt.compare(password, user.passwordHash);
 
       if (!isValidPassword) {
+        console.log('Invalid password for user:', email);
         res.status(401).json({
           success: false,
           error: 'Invalid credentials.',
@@ -101,6 +105,7 @@ export class AuthController {
         return;
       }
 
+      console.log('Password valid, generating tokens...');
       // Generate tokens
       const accessToken = generateAccessToken({ id: user.id, email: user.email });
       const refreshToken = generateRefreshToken({ id: user.id, email: user.email });
@@ -114,6 +119,7 @@ export class AuthController {
         },
       });
 
+      console.log('Login successful for user:', email);
       res.status(200).json({
         success: true,
         data: {

@@ -12,6 +12,7 @@
     "prisma:studio": "prisma studio",
     "prisma:push": "prisma db push",
     "seed": "ts-node prisma/seed.ts",
+    "recalculate-scores": "ts-node src/scripts/recalculate-triage-scores.ts",
     "lint": "tsc --noEmit"
   },
   "keywords": [

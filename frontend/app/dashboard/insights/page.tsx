@@ -3,14 +3,27 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { insightsApi, HealthInsight } from "@/lib/api/insights";
+import { useTheme } from "@/lib/theme/theme-context";
+import Button3D from "@/components/ui/Button3D";
+import { ShareModal } from "@/components/ui/ShareModal";
+import {
+  generateAIInsightsPDF,
+  downloadPDF,
+  getPDFBlob,
+} from "@/lib/utils/pdf-generator";
 
 export default function InsightsPage() {
   const router = useRouter();
+  const { theme } = useTheme();
   const [insights, setInsights] = useState<HealthInsight[]>([]);
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [selectedInsight, setSelectedInsight] = useState<HealthInsight | null>(
+    null
+  );
 
   useEffect(() => {
     fetchInsights();
@@ -62,6 +75,68 @@ export default function InsightsPage() {
     }
   };
 
+  const handleShareInsight = async (
+    method: "email" | "whatsapp" | "download"
+  ) => {
+    if (!selectedInsight) return;
+
+    try {
+      // Prepare data for PDF
+      const insightData = {
+        symptomName: selectedInsight.symptomId || "General Health",
+        severity: selectedInsight.severity || 5,
+        insights: {
+          possibleCauses: selectedInsight.possibleCauses || [],
+          riskAssessment:
+            selectedInsight.riskAssessment || "No risk assessment available",
+          recommendations: selectedInsight.recommendations || [],
+          urgencyLevel: selectedInsight.urgencyLevel || "NON_URGENT",
+          disclaimer:
+            selectedInsight.disclaimer ||
+            "This is AI-generated information and should not replace professional medical advice.",
+        },
+      };
+
+      // Generate PDF
+      const userName = "Patient"; // You can get this from user context
+      const pdf = generateAIInsightsPDF(insightData, userName);
+      const filename = `ai-insights-${
+        new Date().toISOString().split("T")[0]
+      }.pdf`;
+
+      if (method === "download") {
+        downloadPDF(pdf, filename);
+      } else if (method === "email") {
+        const pdfBlob = getPDFBlob(pdf);
+        const file = new File([pdfBlob], filename, { type: "application/pdf" });
+
+        if (navigator.share && navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            files: [file],
+            title: "AI Health Insights Report",
+            text: "Here is my AI-generated health insights report",
+          });
+        } else {
+          // Fallback: create mailto link
+          const mailtoLink = `mailto:?subject=AI Health Insights Report&body=Please find my AI health insights attached.`;
+          window.location.href = mailtoLink;
+          downloadPDF(pdf, filename);
+          alert("PDF downloaded. Please attach it to your email manually.");
+        }
+      } else if (method === "whatsapp") {
+        downloadPDF(pdf, filename);
+        const message = encodeURIComponent(
+          "Check out my AI health insights report!"
+        );
+        window.open(`https://wa.me/?text=${message}`, "_blank");
+        alert("PDF downloaded. Please share the file via WhatsApp manually.");
+      }
+    } catch (error) {
+      console.error("Failed to generate/share report:", error);
+      alert("Failed to generate report. Please try again.");
+    }
+  };
+
   const getTypeIcon = (type: string) => {
     switch (type) {
       case "pattern":
@@ -96,128 +171,164 @@ export default function InsightsPage() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading insights...</p>
+          <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="mt-3 sm:mt-4 text-sm sm:text-base text-gray-600">
+            Loading insights...
+          </p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-purple-50 via-blue-50 to-indigo-50 py-8">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div
+      className="min-h-screen transition-colors duration-200 py-4 sm:py-6 md:py-8"
+      style={{ background: theme === "dark" ? "#0a0b0f" : "#f9fafb" }}
+    >
+      <div className="max-w-6xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex justify-between items-start mb-6">
+        <div className="mb-6 sm:mb-7 md:mb-8">
+          <div className="flex flex-col sm:flex-row justify-between items-start gap-3 sm:gap-4 mb-4 sm:mb-5 md:mb-6">
             <div>
-              <h1 className="text-4xl font-bold bg-linear-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
+              <h1
+                className="text-xl sm:text-2xl md:text-3xl font-bold transition-colors duration-200"
+                style={{
+                  color: theme === "dark" ? "#e5e7eb" : "rgb(17, 24, 39)",
+                }}
+              >
                 🤖 AI Health Insights
               </h1>
-              <p className="text-gray-600 mt-2 text-lg">
+              <p
+                className="mt-1 sm:mt-2 text-sm sm:text-base md:text-lg transition-colors duration-200"
+                style={{
+                  color: theme === "dark" ? "#9ca3af" : "rgb(75, 85, 99)",
+                }}
+              >
                 Discover patterns, trends, and personalized health
                 recommendations
               </p>
             </div>
-            <button
+            <Button3D
+              variant="white"
+              size="sm"
               onClick={() => router.push("/dashboard")}
-              className="text-gray-600 hover:text-gray-900 font-medium px-4 py-2 hover:bg-white rounded-xl transition-all"
+              className="self-start"
             >
               ← Back
-            </button>
+            </Button3D>
           </div>
 
-          <div className="flex flex-wrap gap-4">
-            <button
+          <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4">
+            <Button3D
+              variant="purple"
+              size="md"
               onClick={generateInsights}
               disabled={generating}
-              className="group px-8 py-4 bg-linear-to-r from-purple-600 to-indigo-600 text-white rounded-2xl font-bold hover:from-purple-700 hover:to-indigo-700 disabled:from-gray-400 disabled:to-gray-500 transition-all duration-300 shadow-lg hover:shadow-xl disabled:cursor-not-allowed hover:scale-105 disabled:hover:scale-100"
             >
               {generating ? (
                 <span className="flex items-center gap-3">
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
                   Generating Insights...
                 </span>
               ) : (
                 <span className="flex items-center gap-2">
-                  <span className="text-xl group-hover:scale-110 transition-transform">
-                    🤖
-                  </span>
+                  <span className="text-xl">🤖</span>
                   Generate AI Insights
                 </span>
               )}
-            </button>
+            </Button3D>
 
-            <button
-              onClick={fetchInsights}
-              className="px-6 py-4 bg-white border-2 border-gray-200 rounded-2xl font-semibold hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 shadow-md hover:shadow-lg"
-            >
+            <Button3D variant="white" size="md" onClick={fetchInsights}>
               🔄 Refresh
-            </button>
+            </Button3D>
           </div>
         </div>
 
         {/* Messages */}
         {error && (
-          <div className="mb-6 p-5 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-xl flex items-start gap-3 shadow-md">
-            <span className="text-2xl">⚠️</span>
+          <div className="mb-4 sm:mb-5 md:mb-6 p-3 sm:p-4 md:p-5 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-xl flex items-start gap-2 sm:gap-3 shadow-md">
+            <span className="text-lg sm:text-xl md:text-2xl">⚠️</span>
             <div className="flex-1">
-              <p className="font-bold">Error</p>
-              <p>{error}</p>
+              <p className="font-bold text-sm sm:text-base">Error</p>
+              <p className="text-sm sm:text-base">{error}</p>
             </div>
           </div>
         )}
 
         {message && (
-          <div className="mb-6 p-5 bg-green-50 border-l-4 border-green-500 text-green-700 rounded-xl flex items-start gap-3 shadow-md">
-            <span className="text-2xl">✅</span>
+          <div className="mb-4 sm:mb-5 md:mb-6 p-3 sm:p-4 md:p-5 bg-green-50 border-l-4 border-green-500 text-green-700 rounded-xl flex items-start gap-2 sm:gap-3 shadow-md">
+            <span className="text-lg sm:text-xl md:text-2xl">✅</span>
             <div className="flex-1">
-              <p className="font-bold">Success</p>
-              <p>{message}</p>
+              <p className="font-bold text-sm sm:text-base">Success</p>
+              <p className="text-sm sm:text-base">{message}</p>
             </div>
           </div>
         )}
 
         {/* Insights List */}
         {insights.length === 0 ? (
-          <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-2xl p-16 text-center border border-gray-100">
-            <div className="w-24 h-24 bg-linear-to-br from-purple-100 to-indigo-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <span className="text-5xl">🤖</span>
+          <div
+            className="rounded-lg p-8 sm:p-12 md:p-16 text-center transition-colors duration-200"
+            style={{
+              background: theme === "dark" ? "#1a1d29" : "white",
+              border:
+                theme === "dark"
+                  ? "1px solid #2d3748"
+                  : "1px solid rgb(229, 231, 235)",
+            }}
+          >
+            <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-5 md:mb-6">
+              <span className="text-3xl sm:text-4xl md:text-5xl">🤖</span>
             </div>
-            <h2 className="text-3xl font-bold text-gray-900 mb-3">
+            <h2
+              className="text-xl sm:text-2xl md:text-3xl font-bold mb-2 sm:mb-3 transition-colors duration-200"
+              style={{
+                color: theme === "dark" ? "#e5e7eb" : "rgb(17, 24, 39)",
+              }}
+            >
               No Insights Yet
             </h2>
-            <p className="text-gray-600 mb-8 text-lg max-w-md mx-auto">
+            <p
+              className="mb-6 sm:mb-7 md:mb-8 text-sm sm:text-base md:text-lg max-w-md mx-auto transition-colors duration-200"
+              style={{
+                color: theme === "dark" ? "#9ca3af" : "rgb(75, 85, 99)",
+              }}
+            >
               Generate AI-powered insights from your symptom history to discover
               patterns and get personalized recommendations
             </p>
-            <button
+            <Button3D
+              variant="purple"
+              size="md"
               onClick={generateInsights}
               disabled={generating}
-              className="px-8 py-4 bg-linear-to-r from-purple-600 to-indigo-600 text-white rounded-2xl font-bold hover:from-purple-700 hover:to-indigo-700 disabled:from-gray-400 disabled:to-gray-500 transition-all duration-300 shadow-lg hover:shadow-xl disabled:cursor-not-allowed hover:scale-105 disabled:hover:scale-100"
             >
               Generate Your First Insights
-            </button>
+            </Button3D>
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-5 md:space-y-6">
             {insights.map((insight) => (
               <div
                 key={insight.id}
-                className={`bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 p-6 border-l-4 ${
-                  insight.severity === "critical"
-                    ? "border-red-500"
-                    : insight.severity === "high"
-                    ? "border-orange-500"
-                    : insight.severity === "medium"
-                    ? "border-yellow-500"
-                    : "border-blue-500"
-                }`}
+                className="rounded-lg hover:shadow-md transition-all duration-300 p-4 sm:p-5 md:p-6 border-l-4"
+                style={{
+                  background: theme === "dark" ? "#1a1d29" : "white",
+                  borderLeftColor:
+                    insight.severity === "critical"
+                      ? "rgb(239, 68, 68)"
+                      : insight.severity === "high"
+                      ? "rgb(249, 115, 22)"
+                      : insight.severity === "medium"
+                      ? "rgb(234, 179, 8)"
+                      : "rgb(59, 130, 246)",
+                }}
               >
                 {/* Header */}
-                <div className="flex justify-between items-start mb-5">
-                  <div className="flex items-start gap-4 flex-1">
+                <div className="flex flex-col sm:flex-row justify-between items-start gap-3 sm:gap-4 mb-4 sm:mb-5">
+                  <div className="flex items-start gap-3 sm:gap-4 flex-1 w-full">
                     <div
-                      className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${
+                      className={`w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 rounded-xl flex items-center justify-center shrink-0 ${
                         insight.insightType === "pattern"
                           ? "bg-blue-100"
                           : insight.insightType === "trend"
@@ -227,24 +338,30 @@ export default function InsightsPage() {
                           : "bg-purple-100"
                       }`}
                     >
-                      <span className="text-2xl">
+                      <span className="text-lg sm:text-xl md:text-2xl">
                         {getTypeIcon(insight.insightType)}
                       </span>
                     </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2 flex-wrap">
-                        <h3 className="text-2xl font-bold text-gray-900">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 sm:gap-3 mb-2 flex-wrap">
+                        <h3
+                          className="text-lg sm:text-xl md:text-2xl font-bold transition-colors duration-200"
+                          style={{
+                            color:
+                              theme === "dark" ? "#e5e7eb" : "rgb(17, 24, 39)",
+                          }}
+                        >
                           {insight.title}
                         </h3>
                         <span
-                          className={`px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wide ${getTypeColor(
+                          className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs font-bold uppercase tracking-wide ${getTypeColor(
                             insight.insightType
                           )}`}
                         >
                           {insight.insightType.replace("_", " ")}
                         </span>
                         <span
-                          className={`px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wide ${
+                          className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs font-bold uppercase tracking-wide ${
                             insight.severity === "critical"
                               ? "bg-red-100 text-red-700"
                               : insight.severity === "high"
@@ -257,25 +374,26 @@ export default function InsightsPage() {
                           {insight.severity}
                         </span>
                       </div>
-                      <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                      <p className="text-sm sm:text-base text-gray-700 leading-relaxed whitespace-pre-wrap">
                         {insight.description}
                       </p>
                     </div>
                   </div>
-                  <button
+                  <Button3D
+                    variant="red"
+                    size="sm"
                     onClick={() => deleteInsight(insight.id)}
-                    className="shrink-0 w-8 h-8 flex items-center justify-center text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg ml-4 transition-all"
-                    title="Delete insight"
+                    className="shrink-0 w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center self-start sm:ml-2"
                   >
-                    <span className="text-xl">×</span>
-                  </button>
+                    <span className="text-lg sm:text-xl">×</span>
+                  </Button3D>
                 </div>
 
                 {/* Related Symptoms */}
                 {insight.relatedSymptoms.length > 0 && (
-                  <div className="mb-5 bg-gray-50 rounded-xl p-4">
-                    <p className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
-                      <span className="text-lg">🔗</span>
+                  <div className="mb-4 sm:mb-5 bg-gray-50 rounded-xl p-3 sm:p-4">
+                    <p className="text-xs sm:text-sm font-bold text-gray-700 mb-2 sm:mb-3 flex items-center gap-2">
+                      <span className="text-base sm:text-lg">🔗</span>
                       Related Symptoms:
                     </p>
                     <div className="flex flex-wrap gap-2">
@@ -293,16 +411,16 @@ export default function InsightsPage() {
 
                 {/* Recommendations */}
                 {insight.recommendations.length > 0 && (
-                  <div className="mb-5 bg-blue-50 rounded-xl p-4">
-                    <p className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
-                      <span className="text-lg">💡</span>
+                  <div className="mb-4 sm:mb-5 bg-blue-50 rounded-xl p-3 sm:p-4">
+                    <p className="text-xs sm:text-sm font-bold text-gray-700 mb-2 sm:mb-3 flex items-center gap-2">
+                      <span className="text-base sm:text-lg">💡</span>
                       Recommendations:
                     </p>
                     <ul className="space-y-2">
                       {insight.recommendations.map((rec, index) => (
                         <li
                           key={index}
-                          className="flex items-start gap-2 text-gray-700"
+                          className="flex items-start gap-2 text-sm sm:text-base text-gray-700"
                         >
                           <span className="text-blue-500 mt-1">✓</span>
                           <span>{rec}</span>
@@ -313,8 +431,8 @@ export default function InsightsPage() {
                 )}
 
                 {/* Footer */}
-                <div className="flex justify-between items-center text-sm text-gray-500 pt-4 border-t border-gray-200">
-                  <div className="flex items-center gap-6">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 text-xs sm:text-sm text-gray-500 pt-3 sm:pt-4 border-t border-gray-200">
+                  <div className="flex items-center gap-4 sm:gap-6 flex-wrap">
                     <span className="flex items-center gap-2">
                       <span
                         className={`w-2 h-2 rounded-full ${
@@ -337,15 +455,28 @@ export default function InsightsPage() {
                         {Math.round(insight.confidence * 100)}% confidence
                       </span>
                     </span>
+                    <span className="flex items-center gap-2">
+                      <span className="text-lg">📅</span>
+                      {new Date(insight.createdAt).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
+                    </span>
                   </div>
-                  <span className="flex items-center gap-2">
-                    <span className="text-lg">📅</span>
-                    {new Date(insight.createdAt).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                    })}
-                  </span>
+                  <Button3D
+                    variant="indigo"
+                    size="sm"
+                    onClick={() => {
+                      setSelectedInsight(insight);
+                      setShowShareModal(true);
+                    }}
+                  >
+                    <span className="flex items-center gap-1">
+                      <span className="text-base">📤</span>
+                      <span className="hidden sm:inline">Share PDF</span>
+                    </span>
+                  </Button3D>
                 </div>
               </div>
             ))}
@@ -354,16 +485,16 @@ export default function InsightsPage() {
 
         {/* Info Box */}
         {insights.length > 0 && (
-          <div className="mt-8 bg-indigo-50/80 backdrop-blur-sm rounded-2xl p-6 border border-indigo-100">
-            <div className="flex gap-4">
-              <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center shrink-0">
-                <span className="text-2xl">ℹ️</span>
+          <div className="mt-6 sm:mt-7 md:mt-8 bg-indigo-50 rounded-lg p-4 sm:p-5 md:p-6 border border-indigo-200">
+            <div className="flex gap-3 sm:gap-4">
+              <div className="w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 bg-indigo-100 rounded-xl flex items-center justify-center shrink-0">
+                <span className="text-lg sm:text-xl md:text-2xl">ℹ️</span>
               </div>
               <div>
-                <h3 className="font-bold text-gray-900 mb-2">
+                <h3 className="font-bold text-sm sm:text-base text-gray-900 mb-1 sm:mb-2">
                   About AI Insights
                 </h3>
-                <p className="text-sm text-gray-700 leading-relaxed">
+                <p className="text-xs sm:text-sm text-gray-700 leading-relaxed">
                   These insights are generated by analyzing your symptom history
                   using advanced AI algorithms. They help identify patterns,
                   trends, and potential risk factors. Always consult with
@@ -374,6 +505,18 @@ export default function InsightsPage() {
           </div>
         )}
       </div>
+
+      {/* Share Modal */}
+      <ShareModal
+        isOpen={showShareModal}
+        onClose={() => {
+          setShowShareModal(false);
+          setSelectedInsight(null);
+        }}
+        onShare={handleShareInsight}
+        title="Share AI Insights Report"
+        description="Generate and share a beautiful PDF of this AI insight"
+      />
     </div>
   );
 }
