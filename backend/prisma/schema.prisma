@@ -1,0 +1,253 @@
+// Prisma Schema for Smart Symptom Log & Triage Assistant
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User authentication and profile
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  passwordHash  String    @map("password_hash")
+  name          String
+  dateOfBirth   DateTime? @map("date_of_birth")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  
+  profile       UserProfile?
+  symptoms      Symptom[]
+  refreshTokens RefreshToken[]
+  healthInsights HealthInsight[]
+  
+  @@map("users")
+}
+
+model UserProfile {
+  id                String   @id @default(uuid())
+  userId            String   @unique @map("user_id")
+  medicalConditions String[] @default([]) @map("medical_conditions")
+  allergies         String[] @default([])
+  currentMedications String[] @default([]) @map("current_medications")
+  emergencyContact  Json?    @map("emergency_contact")
+  bloodType         String?  @map("blood_type")
+  height            Float?
+  weight            Float?
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("user_profiles")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  token     String   @unique
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("refresh_tokens")
+}
+
+// Symptom tracking
+model Symptom {
+  id           String    @id @default(uuid())
+  userId       String    @map("user_id")
+  symptomName  String    @map("symptom_name")
+  bodyLocation String?   @map("body_location")
+  severity     Int       @default(5) // 1-10 scale
+  startedAt    DateTime  @default(now()) @map("started_at")
+  endedAt      DateTime? @map("ended_at")
+  status       SymptomStatus @default(ACTIVE)
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  
+  user              User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  details           SymptomDetail?
+  triageAssessments TriageAssessment[]
+  attachments       Attachment[]
+  treatments        Treatment[]
+  
+  @@index([userId, startedAt])
+  @@index([status])
+  @@map("symptoms")
+}
+
+enum SymptomStatus {
+  ACTIVE
+  RESOLVED
+  IMPROVING
+  WORSENING
+  MONITORING
+}
+
+model SymptomDetail {
+  id             String   @id @default(uuid())
+  symptomId      String   @unique @map("symptom_id")
+  characteristic String?  // sharp, dull, burning, throbbing, etc.
+  frequency      String?  // constant, intermittent, occasional
+  triggers       String[] @default([])
+  alleviatingFactors String[] @default([]) @map("alleviating_factors")
+  aggravatingFactors String[] @default([]) @map("aggravating_factors")
+  notes          String?
+  temperature    Float?
+  heartRate      Int?     @map("heart_rate")
+  bloodPressure  String?  @map("blood_pressure")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+  
+  symptom Symptom @relation(fields: [symptomId], references: [id], onDelete: Cascade)
+  
+  @@map("symptom_details")
+}
+
+// Triage assessment
+model TriageAssessment {
+  id             String       @id @default(uuid())
+  symptomId      String       @map("symptom_id")
+  urgencyLevel   UrgencyLevel @map("urgency_level")
+  score          Int          @default(0)
+  reasoning      String[]     @default([])
+  recommendation String
+  redFlags       String[]     @default([]) @map("red_flags")
+  aiInsights     String?      @map("ai_insights") @db.Text
+  patternAnalysis String?     @map("pattern_analysis") @db.Text
+  createdAt      DateTime     @default(now()) @map("created_at")
+  
+  symptom Symptom @relation(fields: [symptomId], references: [id], onDelete: Cascade)
+  
+  @@index([symptomId])
+  @@map("triage_assessments")
+}
+
+enum UrgencyLevel {
+  EMERGENCY       // Call 911 / Go to ER immediately
+  URGENT          // Urgent care within 24 hours
+  SEMI_URGENT     // Primary care within 2-3 days
+  NON_URGENT      // Schedule appointment within 1-2 weeks
+  SELF_CARE       // Monitor at home, self-care measures
+}
+
+// Attachments (photos, documents)
+model Attachment {
+  id        String   @id @default(uuid())
+  symptomId String   @map("symptom_id")
+  fileName  String   @map("file_name")
+  fileUrl   String   @map("file_url")
+  fileType  String   @map("file_type")
+  fileSize  Int      @map("file_size")
+  createdAt DateTime @default(now()) @map("created_at")
+  
+  symptom Symptom @relation(fields: [symptomId], references: [id], onDelete: Cascade)
+  
+  @@map("attachments")
+}
+
+// Health insights from AI analysis
+model HealthInsight {
+  id               String   @id @default(uuid())
+  userId           String   @map("user_id")
+  insightType      String   @map("insight_type") // pattern, trend, risk_factor, recommendation
+  title            String
+  description      String   @db.Text
+  severity         String   // low, medium, high, critical
+  relatedSymptoms  String[] @default([]) @map("related_symptoms")
+  recommendations   String[] @default([])
+  confidence       Float    @default(0.0) // 0.0 to 1.0
+  metadata         Json?    // Additional AI-generated data
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId, createdAt])
+  @@index([insightType])
+  @@map("health_insights")
+}
+
+// Treatment tracking
+model Treatment {
+  id                  String   @id @default(uuid())
+  symptomId           String   @map("symptom_id")
+  treatmentType       String   @map("treatment_type") // medication, therapy, home remedy
+  medicationName      String?  @map("medication_name")
+  dosage              String?
+  frequency           String?
+  startedAt           DateTime @default(now()) @map("started_at")
+  endedAt             DateTime? @map("ended_at")
+  effectivenessRating Int?     @map("effectiveness_rating") // 1-5 scale
+  sideEffects         String[] @default([]) @map("side_effects")
+  notes               String?
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+  
+  symptom Symptom @relation(fields: [symptomId], references: [id], onDelete: Cascade)
+  
+  @@map("treatments")
+}
+
+// Medication tracking and reminders
+model Medication {
+  id                  String   @id @default(uuid())
+  userId              String   @map("user_id")
+  name                String
+  dosage              String
+  frequency           String   // e.g., "twice daily", "every 8 hours"
+  timeSlots           String[] @default([]) @map("time_slots") // e.g., ["08:00", "20:00"]
+  startDate           DateTime @default(now()) @map("start_date")
+  endDate             DateTime? @map("end_date")
+  purpose             String?  // What condition/symptom is this for
+  prescribedBy        String?  @map("prescribed_by")
+  sideEffects         String[] @default([]) @map("side_effects")
+  notes               String?
+  reminderEnabled     Boolean  @default(true) @map("reminder_enabled")
+  status              MedicationStatus @default(ACTIVE)
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+  
+  logs                MedicationLog[]
+  
+  @@index([userId, status])
+  @@map("medications")
+}
+
+enum MedicationStatus {
+  ACTIVE
+  PAUSED
+  COMPLETED
+  DISCONTINUED
+}
+
+// Medication intake logs
+model MedicationLog {
+  id              String   @id @default(uuid())
+  medicationId    String   @map("medication_id")
+  scheduledTime   DateTime @map("scheduled_time")
+  takenAt         DateTime? @map("taken_at")
+  status          MedicationLogStatus @default(PENDING)
+  notes           String?
+  effectiveness   Int?     // 1-5 rating of how well it worked
+  sideEffectsNoted String[] @default([]) @map("side_effects_noted")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  
+  medication Medication @relation(fields: [medicationId], references: [id], onDelete: Cascade)
+  
+  @@index([medicationId, scheduledTime])
+  @@map("medication_logs")
+}
+
+enum MedicationLogStatus {
+  PENDING
+  TAKEN
+  MISSED
+  SKIPPED
+}
