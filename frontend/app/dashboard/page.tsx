@@ -255,67 +255,67 @@ export default function DashboardPage() {
     }
   };
 
+  const borderColor = theme === "dark" ? "#ffffff" : "#000000";
+  const bgColor = theme === "dark" ? "#0a0b0f" : "#fffef9";
+  const cardBg = theme === "dark" ? "#1a1d29" : "#ffffff";
+  const textColor = theme === "dark" ? "#ffffff" : "#000000";
+  const mutedColor = theme === "dark" ? "#9ca3af" : "#525252";
+
   return (
     <div
-      className="min-h-screen transition-colors duration-200"
-      style={{ background: theme === "dark" ? "#0a0b0f" : "#fffef9" }}
+      className="min-h-screen relative overflow-hidden"
+      style={{ background: bgColor }}
     >
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
+      <div className="absolute inset-0 bg-dots pointer-events-none" />
+
+      <div className="relative max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
         {/* Header */}
-        <div className="mb-4 sm:mb-6">
+        <div className="mb-4 sm:mb-6 animate-slide-up">
           <h1
-            className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-2 sm:mb-3 transition-colors duration-200"
-            style={{ color: theme === "dark" ? "#e5e7eb" : "#242622" }}
+            className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black mb-2 sm:mb-3 uppercase tracking-tight"
+            style={{ color: textColor }}
           >
-            Health Dashboard
+            Health <span className="text-[#0066ff]">Dashboard</span>
           </h1>
           <p
-            className="text-sm sm:text-base md:text-lg font-bold transition-colors duration-200"
-            style={{ color: theme === "dark" ? "#9ca3af" : "#525252" }}
+            className="text-sm sm:text-base md:text-lg font-bold"
+            style={{ color: mutedColor }}
           >
-            Track and manage your health journey
+            Track and manage your health journey 🚀
           </p>
         </div>
 
         {/* Quick Stats */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6 mb-4 sm:mb-6 md:mb-8">
           <div
-            className="p-4 sm:p-5 md:p-6 rounded-xl transition-all duration-200 hover:-translate-y-1"
+            className="nb-card p-4 sm:p-5 md:p-6 hover-lift animate-pop-in animate-stagger-1"
             style={{
-              background:
-                theme === "dark"
-                  ? "linear-gradient(135deg, #1a1d29 0%, #252937 100%)"
-                  : "linear-gradient(135deg, #ffffff 0%, #f9fafb 100%)",
-              border:
-                theme === "dark" ? "3px solid #2d3748" : "3px solid #242622",
-              boxShadow:
-                theme === "dark" ? "0 6px 0 #2d3748" : "0 6px 0 #242622",
+              background: cardBg,
+              border: `4px solid ${borderColor}`,
+              boxShadow: `6px 6px 0 ${borderColor}`,
             }}
           >
             <div className="flex items-center justify-between">
               <div>
                 <div
-                  className="text-xs sm:text-sm font-black uppercase tracking-widest transition-colors duration-200"
-                  style={{ color: theme === "dark" ? "#9ca3af" : "#525252" }}
+                  className="text-xs sm:text-sm font-black uppercase tracking-widest"
+                  style={{ color: mutedColor }}
                 >
                   Total
                 </div>
                 <div
-                  className="text-2xl sm:text-3xl md:text-4xl font-bold mt-1 sm:mt-1.5 transition-colors duration-200"
-                  style={{ color: theme === "dark" ? "#e5e7eb" : "#242622" }}
+                  className="text-2xl sm:text-3xl md:text-4xl font-black mt-1 sm:mt-1.5"
+                  style={{ color: textColor }}
                 >
                   {stats.total}
                 </div>
               </div>
               <div
-                className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-xl flex items-center justify-center transition-all duration-200"
+                className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 flex items-center justify-center"
                 style={{
-                  background:
-                    theme === "dark"
-                      ? "linear-gradient(135deg, #2d3748 0%, #374151 100%)"
-                      : "linear-gradient(135deg, rgb(243, 244, 246) 0%, rgb(229, 231, 235) 100%)",
-                  border: "3px solid #242622",
-                  boxShadow: "0 3px 0 #242622",
+                  background: "#ffed4e",
+                  border: `4px solid ${borderColor}`,
+                  boxShadow: `4px 4px 0 ${borderColor}`,
                 }}
               >
                 <span className="text-lg sm:text-xl md:text-2xl">📊</span>
@@ -324,46 +324,28 @@ export default function DashboardPage() {
           </div>
 
           <div
-            className="p-4 sm:p-5 md:p-6 rounded-xl transition-all duration-200 hover:-translate-y-1"
+            className="nb-card p-4 sm:p-5 md:p-6 hover-lift animate-pop-in animate-stagger-2"
             style={{
-              background:
-                theme === "dark"
-                  ? "linear-gradient(135deg, #1a1d29 0%, #1e2a3f 100%)"
-                  : "linear-gradient(135deg, #ffffff 0%, #dbeafe 100%)",
-              border:
-                theme === "dark" ? "3px solid #3b82f6" : "3px solid #242622",
-              boxShadow:
-                theme === "dark"
-                  ? "0 0 24px rgba(59, 130, 246, 0.6), 0 6px 0 #3b82f6"
-                  : "0 6px 0 rgb(59, 130, 246)",
+              background: "#0066ff",
+              border: `4px solid ${borderColor}`,
+              boxShadow: `6px 6px 0 ${borderColor}`,
             }}
           >
             <div className="flex items-center justify-between">
               <div>
-                <div
-                  className="text-xs sm:text-sm font-black uppercase tracking-widest"
-                  style={{
-                    color: theme === "dark" ? "#93c5fd" : "rgb(30, 58, 138)",
-                  }}
-                >
+                <div className="text-xs sm:text-sm font-black uppercase tracking-widest text-white">
                   Active
                 </div>
-                <div
-                  className="text-2xl sm:text-3xl md:text-4xl font-bold mt-1 sm:mt-1.5"
-                  style={{
-                    color: theme === "dark" ? "#93c5fd" : "rgb(30, 58, 138)",
-                  }}
-                >
+                <div className="text-2xl sm:text-3xl md:text-4xl font-black mt-1 sm:mt-1.5 text-white">
                   {stats.active}
                 </div>
               </div>
               <div
-                className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-xl flex items-center justify-center"
+                className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 flex items-center justify-center"
                 style={{
-                  background:
-                    "linear-gradient(135deg, rgb(219, 234, 254) 0%, rgb(191, 219, 254) 100%)",
-                  border: "3px solid #242622",
-                  boxShadow: "0 3px 0 #242622",
+                  background: "#ffffff",
+                  border: `4px solid ${borderColor}`,
+                  boxShadow: `4px 4px 0 ${borderColor}`,
                 }}
               >
                 <span className="text-lg sm:text-xl md:text-2xl">⚡</span>
@@ -372,46 +354,28 @@ export default function DashboardPage() {
           </div>
 
           <div
-            className="p-4 sm:p-5 md:p-6 rounded-xl transition-all duration-200 hover:-translate-y-1"
+            className="nb-card p-4 sm:p-5 md:p-6 hover-lift animate-pop-in animate-stagger-3"
             style={{
-              background:
-                theme === "dark"
-                  ? "linear-gradient(135deg, #1a1d29 0%, #2a2418 100%)"
-                  : "linear-gradient(135deg, #ffffff 0%, #fef3c7 100%)",
-              border:
-                theme === "dark" ? "3px solid #f59e0b" : "3px solid #242622",
-              boxShadow:
-                theme === "dark"
-                  ? "0 0 24px rgba(245, 158, 11, 0.6), 0 6px 0 #f59e0b"
-                  : "0 6px 0 rgb(245, 158, 11)",
+              background: "#39ff14",
+              border: `4px solid ${borderColor}`,
+              boxShadow: `6px 6px 0 ${borderColor}`,
             }}
           >
             <div className="flex items-center justify-between">
               <div>
-                <div
-                  className="text-xs sm:text-sm font-black uppercase tracking-widest"
-                  style={{
-                    color: theme === "dark" ? "#fbbf24" : "rgb(146, 64, 14)",
-                  }}
-                >
+                <div className="text-xs sm:text-sm font-black uppercase tracking-widest text-black">
                   Improving
                 </div>
-                <div
-                  className="text-2xl sm:text-3xl md:text-4xl font-bold mt-1 sm:mt-1.5"
-                  style={{
-                    color: theme === "dark" ? "#fbbf24" : "rgb(146, 64, 14)",
-                  }}
-                >
+                <div className="text-2xl sm:text-3xl md:text-4xl font-black mt-1 sm:mt-1.5 text-black">
                   {stats.improving}
                 </div>
               </div>
               <div
-                className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-xl flex items-center justify-center"
+                className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 flex items-center justify-center"
                 style={{
-                  background:
-                    "linear-gradient(135deg, rgb(254, 243, 199) 0%, rgb(253, 230, 138) 100%)",
-                  border: "3px solid #242622",
-                  boxShadow: "0 3px 0 #242622",
+                  background: "#000000",
+                  border: `4px solid ${borderColor}`,
+                  boxShadow: `4px 4px 0 ${borderColor}`,
                 }}
               >
                 <span className="text-lg sm:text-xl md:text-2xl">📈</span>

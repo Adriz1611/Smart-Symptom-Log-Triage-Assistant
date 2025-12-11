@@ -68,7 +68,40 @@ export default function MedicationsPage() {
         apiClient.get("/medications"),
         apiClient.get("/medications/stats?days=30"),
       ]);
-      setMedications(medsResponse.data);
+      console.log("Fetched medications:", medsResponse.data);
+      console.log("Medication logs:", medsResponse.data.map((m: Medication) => ({
+        name: m.name,
+        status: m.status,
+        timeSlots: m.timeSlots,
+        logs: m.logs.map(l => ({ time: l.scheduledTime, status: l.status }))
+      })));
+      
+      // Check if any active medications have no logs and create them
+      const activeMedsWithoutLogs = medsResponse.data.filter(
+        (m: Medication) => m.status === 'ACTIVE' && m.logs.length === 0 && m.timeSlots.length > 0
+      );
+      
+      if (activeMedsWithoutLogs.length > 0) {
+        console.log(`Creating daily logs for ${activeMedsWithoutLogs.length} medications without logs...`);
+        try {
+          // First, clean any duplicate logs
+          await apiClient.delete("/medications/jobs/clean-duplicate-logs");
+          // Then create daily logs
+          await apiClient.post("/medications/jobs/create-daily-logs");
+          // Wait a bit for database to process
+          await new Promise(resolve => setTimeout(resolve, 500));
+          // Refetch medications after creating logs
+          const updatedMeds = await apiClient.get("/medications");
+          console.log("Medications after creating logs:", updatedMeds.data);
+          setMedications(updatedMeds.data);
+        } catch (error) {
+          console.error("Failed to create daily logs:", error);
+          setMedications(medsResponse.data);
+        }
+      } else {
+        setMedications(medsResponse.data);
+      }
+      
       setStats(statsResponse.data);
     } catch (error) {
       console.error("Failed to fetch medications:", error);
@@ -103,13 +136,51 @@ export default function MedicationsPage() {
 
   const handleLogIntake = async (logId: string, status: string) => {
     try {
+      // Optimistic update
+      setMedications(prevMeds => 
+        prevMeds.map(med => ({
+          ...med,
+          logs: med.logs.map(log => 
+            log.id === logId 
+              ? { 
+                  ...log, 
+                  status: status as "PENDING" | "TAKEN" | "MISSED" | "SKIPPED",
+                  takenAt: status === "TAKEN" ? new Date().toISOString() : null 
+                }
+              : log
+          )
+        }))
+      );
+
       await apiClient.post(`/medications/logs/${logId}/intake`, {
         status,
         effectiveness: status === "TAKEN" ? 3 : null,
       });
+      
+      // Refresh to get updated stats
       fetchData();
     } catch (error) {
       console.error("Failed to log intake:", error);
+      // Revert optimistic update on error
+      fetchData();
+    }
+  };
+
+  const handleRefreshSchedule = async () => {
+    try {
+      setLoading(true);
+      // Clean duplicates first
+      await apiClient.delete("/medications/jobs/clean-duplicate-logs");
+      // Create new logs
+      await apiClient.post("/medications/jobs/create-daily-logs");
+      // Wait for processing
+      await new Promise(resolve => setTimeout(resolve, 500));
+      // Reload data
+      await fetchData();
+    } catch (error) {
+      console.error("Failed to refresh schedule:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -156,15 +227,30 @@ export default function MedicationsPage() {
       <div className="container mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
         {/* Header */}
         <div className="mb-6 sm:mb-7 md:mb-8">
-          <Link href="/dashboard" className="inline-block mb-2 sm:mb-3">
-            <Button3D variant="white" size="sm">
-              <span className="flex items-center text-xs sm:text-sm">
-                <span className="mr-1 sm:mr-2">←</span>
-                <span className="hidden xs:inline">Back to Dashboard</span>
-                <span className="xs:hidden">Back</span>
-              </span>
-            </Button3D>
-          </Link>
+          <div className="flex items-center justify-between mb-2 sm:mb-3">
+            <Link href="/dashboard" className="inline-block">
+              <Button3D variant="white" size="sm">
+                <span className="flex items-center text-xs sm:text-sm">
+                  <span className="mr-1 sm:mr-2">←</span>
+                  <span className="hidden xs:inline">Back to Dashboard</span>
+                  <span className="xs:hidden">Back</span>
+                </span>
+              </Button3D>
+            </Link>
+            <button
+              onClick={handleRefreshSchedule}
+              className="px-3 py-2 text-xs font-black rounded-lg transition-all hover:scale-105 active:scale-95"
+              style={{
+                background: "#0066ff",
+                color: "#ffffff",
+                border: "3px solid #000000",
+                boxShadow: "0 3px 0 #000000",
+              }}
+              title="Clean duplicates and refresh schedules"
+            >
+              🔄 Refresh Schedules
+            </button>
+          </div>
           <h1
             className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-black text-gray-900 transition-colors duration-200"
             style={{ color: theme === "dark" ? "#e5e7eb" : "rgb(17, 24, 39)" }}
@@ -690,6 +776,50 @@ export default function MedicationsPage() {
                         Purpose: {med.purpose}
                       </p>
                     )}
+                    {med.prescribedBy && (
+                      <p
+                        className="text-xs sm:text-sm mt-1 transition-colors duration-200"
+                        style={{
+                          color:
+                            theme === "dark" ? "#6b7280" : "rgb(107, 114, 128)",
+                        }}
+                      >
+                        Prescribed by: {med.prescribedBy}
+                      </p>
+                    )}
+                    {med.timeSlots && med.timeSlots.length > 0 && (
+                      <p
+                        className="text-xs sm:text-sm mt-1 transition-colors duration-200"
+                        style={{
+                          color:
+                            theme === "dark" ? "#6b7280" : "rgb(107, 114, 128)",
+                        }}
+                      >
+                        Times: {med.timeSlots.join(", ")}
+                      </p>
+                    )}
+                    {med.sideEffects && med.sideEffects.length > 0 && (
+                      <p
+                        className="text-xs sm:text-sm mt-1 transition-colors duration-200"
+                        style={{
+                          color:
+                            theme === "dark" ? "#dc2626" : "rgb(220, 38, 38)",
+                        }}
+                      >
+                        ⚠️ Side effects: {med.sideEffects.join(", ")}
+                      </p>
+                    )}
+                    {med.notes && (
+                      <p
+                        className="text-xs sm:text-sm mt-1 italic transition-colors duration-200"
+                        style={{
+                          color:
+                            theme === "dark" ? "#6b7280" : "rgb(107, 114, 128)",
+                        }}
+                      >
+                        Note: {med.notes}
+                      </p>
+                    )}
                   </div>
                   <div className="text-right">
                     <p
@@ -758,30 +888,47 @@ export default function MedicationsPage() {
                           </div>
                           {log.status === "PENDING" ? (
                             <div className="flex gap-1">
-                              <Button3D
-                                variant="green"
-                                size="sm"
+                              <button
                                 onClick={() => handleLogIntake(log.id, "TAKEN")}
-                                className="flex-1 px-2! py-1! text-xs"
+                                className="flex-1 px-2 py-1 text-xs font-black rounded transition-all hover:scale-105 active:scale-95"
+                                style={{
+                                  background: "#39ff14",
+                                  color: "#000000",
+                                  border: "2px solid #000000",
+                                }}
+                                title="Mark as taken"
                               >
                                 ✓
-                              </Button3D>
-                              <Button3D
-                                variant="white"
-                                size="sm"
-                                onClick={() =>
-                                  handleLogIntake(log.id, "SKIPPED")
-                                }
-                                className="flex-1 px-2! py-1! text-xs"
+                              </button>
+                              <button
+                                onClick={() => handleLogIntake(log.id, "SKIPPED")}
+                                className="flex-1 px-2 py-1 text-xs font-black rounded transition-all hover:scale-105 active:scale-95"
+                                style={{
+                                  background: "#ffffff",
+                                  color: "#000000",
+                                  border: "2px solid #000000",
+                                }}
+                                title="Skip this dose"
                               >
                                 ✕
-                              </Button3D>
+                              </button>
                             </div>
                           ) : (
-                            <div className="text-xs font-medium text-gray-700">
+                            <div 
+                              className="text-xs font-black px-2 py-1 rounded text-center"
+                              style={{
+                                background: log.status === "TAKEN" 
+                                  ? "#39ff14" 
+                                  : log.status === "SKIPPED" 
+                                  ? "#9ca3af" 
+                                  : "#ff6b9d",
+                                color: "#000000",
+                                border: "2px solid #000000"
+                              }}
+                            >
                               {log.status === "TAKEN" && "✓ Taken"}
-                              {log.status === "MISSED" && "✗ Missed"}
-                              {log.status === "SKIPPED" && "— Skipped"}
+                              {log.status === "SKIPPED" && "✕ Skipped"}
+                              {log.status === "MISSED" && "⚠ Missed"}
                             </div>
                           )}
                         </div>

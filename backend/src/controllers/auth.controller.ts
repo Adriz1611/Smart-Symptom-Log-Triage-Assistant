@@ -130,6 +130,11 @@ export class AuthController {
       });
     } catch (error) {
       console.error('Login error:', error);
+      console.error('Error details:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+        name: error instanceof Error ? error.name : undefined
+      });
       res.status(500).json({
         success: false,
         error: 'Login failed.',

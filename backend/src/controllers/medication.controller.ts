@@ -67,6 +67,17 @@ export class MedicationController {
 
       const { status } = req.query;
 
+      // Use IST timezone (UTC+5:30 for India)
+      const now = new Date();
+      const istOffset = 5.5 * 60 * 60 * 1000; // IST is UTC+5:30
+      const istNow = new Date(now.getTime() + istOffset);
+      const today = new Date(Date.UTC(istNow.getUTCFullYear(), istNow.getUTCMonth(), istNow.getUTCDate(), 0, 0, 0, 0));
+      const tomorrow = new Date(today);
+      tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
+
+      console.log('Fetching medications with logs between:', today.toISOString(), 'and', tomorrow.toISOString());
+      console.log('IST date range:', new Date(today.getTime() + istOffset).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }), 'to', new Date(tomorrow.getTime() + istOffset).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }));
+
       const medications = await prisma.medication.findMany({
         where: {
           userId,
@@ -76,8 +87,8 @@ export class MedicationController {
           logs: {
             where: {
               scheduledTime: {
-                gte: new Date(new Date().setHours(0, 0, 0, 0)),
-                lt: new Date(new Date().setHours(23, 59, 59, 999))
+                gte: today,
+                lt: tomorrow
               }
             },
             orderBy: { scheduledTime: 'asc' }
@@ -87,6 +98,11 @@ export class MedicationController {
           }
         },
         orderBy: { createdAt: 'desc' }
+      });
+
+      console.log(`Found ${medications.length} medications`);
+      medications.forEach(med => {
+        console.log(`${med.name}: ${med.logs.length} logs for today`);
       });
 
       res.json(medications);
@@ -259,20 +275,69 @@ export class MedicationController {
 
   // Helper: Create logs for medication
   private async createLogsForMedication(medicationId: string, timeSlots: string[]) {
-    const today = new Date();
-    const logs = timeSlots.map(time => {
-      const [hours, minutes] = time.split(':').map(Number);
-      const scheduledTime = new Date(today);
-      scheduledTime.setHours(hours, minutes, 0, 0);
+    // Use IST timezone (UTC+5:30 for India)
+    const now = new Date();
+    const istOffset = 5.5 * 60 * 60 * 1000; // IST is UTC+5:30
+    const istNow = new Date(now.getTime() + istOffset);
+    const today = new Date(Date.UTC(istNow.getUTCFullYear(), istNow.getUTCMonth(), istNow.getUTCDate(), 0, 0, 0, 0));
+    const tomorrow = new Date(today);
+    tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
 
-      return {
+    console.log(`Creating logs for medication ${medicationId}`);
+    console.log(`Today range (IST): ${new Date(today.getTime() + istOffset).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })} to ${new Date(tomorrow.getTime() + istOffset).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}`);
+
+    // Check for existing logs today to avoid duplicates
+    const existingLogs = await prisma.medicationLog.findMany({
+      where: {
         medicationId,
-        scheduledTime,
-        status: 'PENDING' as const
-      };
+        scheduledTime: {
+          gte: today,
+          lt: tomorrow
+        }
+      }
     });
 
-    await prisma.medicationLog.createMany({ data: logs });
+    const existingTimes = new Set(
+      existingLogs.map(log => {
+        // Convert UTC stored time to IST for comparison
+        const istTime = new Date(log.scheduledTime.getTime() + istOffset);
+        return `${istTime.getUTCHours().toString().padStart(2, '0')}:${istTime.getUTCMinutes().toString().padStart(2, '0')}`;
+      })
+    );
+
+    console.log(`Found ${existingLogs.length} existing logs with times:`, Array.from(existingTimes));
+
+    const logs = timeSlots
+      .filter(time => {
+        const filtered = !existingTimes.has(time);
+        console.log(`Time slot ${time}: ${filtered ? 'will create' : 'already exists'}`);
+        return filtered;
+      })
+      .map(time => {
+        const [hours, minutes] = time.split(':').map(Number);
+        // Create a date in IST timezone, then convert to UTC for storage
+        const istDate = new Date(Date.UTC(istNow.getUTCFullYear(), istNow.getUTCMonth(), istNow.getUTCDate(), hours, minutes, 0, 0));
+        const scheduledTime = new Date(istDate.getTime() - (5.5 * 60 * 60 * 1000)); // Convert IST to UTC
+
+        console.log(`Creating log for ${time} (IST) -> UTC: ${scheduledTime.toISOString()}`);
+
+        return {
+          medicationId,
+          scheduledTime,
+          status: 'PENDING' as const
+        };
+      });
+
+    if (logs.length > 0) {
+      console.log(`Inserting ${logs.length} new logs`);
+      const created = await prisma.medicationLog.createMany({ 
+        data: logs,
+        skipDuplicates: true 
+      });
+      console.log(`Created ${created.count} logs`);
+    } else {
+      console.log('No new logs to create');
+    }
   }
 
   // Background job: Create daily medication logs
@@ -282,10 +347,13 @@ export class MedicationController {
         where: { status: 'ACTIVE', reminderEnabled: true }
       });
 
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
+      // Use IST timezone (UTC+5:30 for India)
+      const now = new Date();
+      const istOffset = 5.5 * 60 * 60 * 1000; // IST is UTC+5:30
+      const istNow = new Date(now.getTime() + istOffset);
+      const today = new Date(Date.UTC(istNow.getUTCFullYear(), istNow.getUTCMonth(), istNow.getUTCDate(), 0, 0, 0, 0));
       const tomorrow = new Date(today);
-      tomorrow.setDate(tomorrow.getDate() + 1);
+      tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
 
       for (const medication of activeMedications) {
         // Check if logs already exist for today
@@ -308,6 +376,61 @@ export class MedicationController {
     } catch (error) {
       console.error('Error creating daily logs:', error);
       res.status(500).json({ error: 'Failed to create daily logs' });
+    }
+  }
+
+  // Clean duplicate logs (remove duplicates with same medication and scheduled time)
+  async cleanDuplicateLogs(_req: AuthRequest, res: Response): Promise<void> {
+    try {
+      // Use IST timezone (UTC+5:30 for India)
+      const now = new Date();
+      const istOffset = 5.5 * 60 * 60 * 1000; // IST is UTC+5:30
+      const istNow = new Date(now.getTime() + istOffset);
+      const today = new Date(Date.UTC(istNow.getUTCFullYear(), istNow.getUTCMonth(), istNow.getUTCDate(), 0, 0, 0, 0));
+      const tomorrow = new Date(today);
+      tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
+
+      // Get all logs for today
+      const allLogs = await prisma.medicationLog.findMany({
+        where: {
+          scheduledTime: {
+            gte: today,
+            lt: tomorrow
+          }
+        },
+        orderBy: [
+          { medicationId: 'asc' },
+          { scheduledTime: 'asc' },
+          { createdAt: 'asc' }
+        ]
+      });
+
+      const seenKeys = new Set<string>();
+      const duplicateIds: string[] = [];
+
+      for (const log of allLogs) {
+        const key = `${log.medicationId}-${log.scheduledTime.toISOString()}`;
+        if (seenKeys.has(key)) {
+          duplicateIds.push(log.id);
+        } else {
+          seenKeys.add(key);
+        }
+      }
+
+      if (duplicateIds.length > 0) {
+        await prisma.medicationLog.deleteMany({
+          where: { id: { in: duplicateIds } }
+        });
+        res.json({ 
+          message: `Removed ${duplicateIds.length} duplicate log(s)`,
+          count: duplicateIds.length 
+        });
+      } else {
+        res.json({ message: 'No duplicates found', count: 0 });
+      }
+    } catch (error) {
+      console.error('Error cleaning duplicate logs:', error);
+      res.status(500).json({ error: 'Failed to clean duplicate logs' });
     }
   }
 }
