@@ -8,8 +8,10 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: symptom_tracker
-    ports:
-      - "5432:5432"
+    # Remove port exposure to prevent conflicts with host PostgreSQL
+    # Only accessible within the internal network
+    expose:
+      - "5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -18,7 +20,7 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - symptom-tracker-network
+      - symptom-tracker-internal
     restart: unless-stopped
 
   backend:
@@ -34,6 +36,7 @@ services:
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-your-super-secret-refresh-key-change-in-production}
       GEMINI_API_KEY: ${GEMINI_API_KEY}
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+    # Port forwarding to host - accessible from outside
     ports:
       - "5000:5000"
     depends_on:
@@ -46,14 +49,18 @@ services:
       retries: 3
       start_period: 40s
     networks:
-      - symptom-tracker-network
+      - symptom-tracker-internal
     restart: unless-stopped
     volumes:
       - ./backend/prisma:/app/prisma:ro
 
 networks:
-  symptom-tracker-network:
+  # Internal isolated network for PostgreSQL and backend communication
+  # PostgreSQL is NOT exposed to host, only backend can access it
+  # Backend port 5000 IS exposed to host for external access
+  symptom-tracker-internal:
     driver: bridge
+    internal: false  # Allow backend to access external resources (APIs, etc)
 
 volumes:
   postgres_data:
