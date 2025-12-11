@@ -75,6 +75,8 @@ app.get('/health', (_req, res) => {
     success: true,
     message: 'Smart Symptom Log & Triage Assistant API is running',
     timestamp: new Date().toISOString(),
+    environment: config.nodeEnv,
+    geminiEnabled: !!process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY !== 'your-gemini-api-key-here',
   });
 });
 

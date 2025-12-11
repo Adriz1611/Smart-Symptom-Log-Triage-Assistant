@@ -49,10 +49,26 @@ export class GeminiService {
 
   constructor() {
     const apiKey = process.env.GEMINI_API_KEY;
-    if (apiKey && apiKey !== 'your-gemini-api-key-here') {
-      this.genAI = new GoogleGenerativeAI(apiKey);
-      this.model = this.genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
-    } 
+    
+    console.log('🔑 Gemini API Key status:', {
+      exists: !!apiKey,
+      length: apiKey?.length || 0,
+      isPlaceholder: apiKey === 'your-gemini-api-key-here',
+      firstChars: apiKey ? `${apiKey.substring(0, 10)}...` : 'undefined'
+    });
+    
+    if (apiKey && apiKey !== 'your-gemini-api-key-here' && apiKey.trim() !== '') {
+      try {
+        this.genAI = new GoogleGenerativeAI(apiKey);
+        this.model = this.genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
+        console.log('✅ Gemini AI initialized successfully');
+      } catch (error) {
+        console.error('❌ Failed to initialize Gemini AI:', error);
+      }
+    } else {
+      console.warn('⚠️  Gemini API Key not configured. AI features will be disabled.');
+      console.warn('⚠️  Set GEMINI_API_KEY environment variable to enable AI insights.');
+    }
   }
 
   isEnabled(): boolean {
