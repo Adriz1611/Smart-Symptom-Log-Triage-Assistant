@@ -347,6 +347,8 @@ export class SymptomController {
     try {
       const userId = req.user!.id;
       
+      console.log('🌱 Starting seed process for user:', userId);
+      
       // Symptom data for seeding
       const symptomNames = [
         'Headache', 'Fever', 'Cough', 'Sore Throat', 'Fatigue', 'Nausea', 'Dizziness',
@@ -447,46 +449,64 @@ export class SymptomController {
       }
 
       // Bulk create symptoms
+      console.log('📝 Creating symptoms...');
       await prisma.symptom.createMany({
         data: symptoms,
       });
+      console.log(`✅ Created ${createdCount} symptoms`);
 
       // Get the created symptoms to add details
+      console.log('🔍 Fetching created symptoms...');
       const createdSymptoms = await prisma.symptom.findMany({
         where: { userId },
         orderBy: { createdAt: 'desc' },
         take: createdCount,
       });
+      console.log(`✅ Found ${createdSymptoms.length} symptoms`);
 
       // Add details and triage assessments
+      console.log('📋 Adding symptom details and triage assessments...');
+      let detailsCount = 0;
+      let triageCount = 0;
+      
       for (const symptom of createdSymptoms) {
-        // Add symptom details
-        await prisma.symptomDetail.create({
-          data: {
-            symptomId: symptom.id,
-            notes: getRandomElement(notes),
-            characteristic: getRandomElement(['Sharp', 'Dull', 'Throbbing', 'Burning', 'Aching', 'Stabbing']),
-            frequency: getRandomElement(['Constant', 'Intermittent', 'Occasional', 'Frequent']),
-          }
-        });
+        try {
+          // Add symptom details
+          await prisma.symptomDetail.create({
+            data: {
+              symptomId: symptom.id,
+              notes: getRandomElement(notes),
+              characteristic: getRandomElement(['Sharp', 'Dull', 'Throbbing', 'Burning', 'Aching', 'Stabbing']),
+              frequency: getRandomElement(['Constant', 'Intermittent', 'Occasional', 'Frequent']),
+            }
+          });
+          detailsCount++;
 
-        // Add triage assessment
-        const urgencyLevel = getRandomElement(urgencyLevels);
-        await prisma.triageAssessment.create({
-          data: {
-            symptomId: symptom.id,
-            urgencyLevel,
-            recommendation: `Based on severity ${symptom.severity}/10, seek ${urgencyLevel.toLowerCase().replace('_', ' ')} medical attention.`,
-            redFlags: symptom.severity >= 8 ? ['High severity symptom', 'Requires immediate attention'] : [],
-          }
-        });
+          // Add triage assessment
+          const urgencyLevel = getRandomElement(urgencyLevels);
+          await prisma.triageAssessment.create({
+            data: {
+              symptomId: symptom.id,
+              urgencyLevel,
+              recommendation: `Based on severity ${symptom.severity}/10, seek ${urgencyLevel.toLowerCase().replace('_', ' ')} medical attention.`,
+              redFlags: symptom.severity >= 8 ? ['High severity symptom', 'Requires immediate attention'] : [],
+            }
+          });
+          triageCount++;
+        } catch (detailError) {
+          console.error(`❌ Error adding details for symptom ${symptom.id}:`, detailError);
+          // Continue with other symptoms instead of failing completely
+        }
       }
+      console.log(`✅ Added ${detailsCount} symptom details and ${triageCount} triage assessments`);
 
       // ========== SEED MEDICATIONS ==========
+      console.log('💊 Creating medications...');
       let medicationCount = 0;
       let medicationLogCount = 0;
 
       for (let i = 0; i < medications.length; i++) {
+        try {
         const medData = medications[i];
         const medicationStatus = i < 10 ? 'ACTIVE' : i === 10 ? 'PAUSED' : 'DISCONTINUED';
         const startDate = getRandomDate(new Date('2025-01-01'), new Date('2025-06-01'));
@@ -514,48 +534,56 @@ export class SymptomController {
 
         medicationCount++;
 
-        // Create medication logs for the past 30 days (only for ACTIVE medications)
-        if (medicationStatus === 'ACTIVE') {
-          for (let dayOffset = 29; dayOffset >= 0; dayOffset--) {
-            const logDate = new Date();
-            logDate.setDate(logDate.getDate() - dayOffset);
-            
-            for (const timeSlot of medData.timeSlots) {
-              const [hours, minutes] = timeSlot.split(':').map(Number);
-              const scheduledTime = new Date(logDate);
-              scheduledTime.setHours(hours, minutes, 0, 0);
+          // Create medication logs for the past 30 days (only for ACTIVE medications)
+          if (medicationStatus === 'ACTIVE') {
+            for (let dayOffset = 29; dayOffset >= 0; dayOffset--) {
+              const logDate = new Date();
+              logDate.setDate(logDate.getDate() - dayOffset);
+              
+              for (const timeSlot of medData.timeSlots) {
+                const [hours, minutes] = timeSlot.split(':').map(Number);
+                const scheduledTime = new Date(logDate);
+                scheduledTime.setHours(hours, minutes, 0, 0);
 
-              // Only create logs for dates after medication start date
-              if (scheduledTime >= startDate) {
-                // 85% taken, 10% skipped, 5% pending (for today's future doses)
-                const isPending = dayOffset === 0 && scheduledTime > new Date();
-                const status = isPending ? 'PENDING' : 
-                             Math.random() < 0.85 ? 'TAKEN' : 
-                             Math.random() < 0.67 ? 'SKIPPED' : 'MISSED';
+                // Only create logs for dates after medication start date
+                if (scheduledTime >= startDate) {
+                  // 85% taken, 10% skipped, 5% pending (for today's future doses)
+                  const isPending = dayOffset === 0 && scheduledTime > new Date();
+                  const status = isPending ? 'PENDING' as const : 
+                               Math.random() < 0.85 ? 'TAKEN' as const : 
+                               Math.random() < 0.67 ? 'SKIPPED' as const : 'MISSED' as const;
 
-                const takenAt = status === 'TAKEN' ? 
-                  new Date(scheduledTime.getTime() + getRandomInt(-15, 30) * 60000) : // Within ±15-30 min
-                  null;
+                  const takenAt = status === 'TAKEN' ? 
+                    new Date(scheduledTime.getTime() + getRandomInt(-15, 30) * 60000) : // Within ±15-30 min
+                    null;
 
-                await prisma.medicationLog.create({
-                  data: {
-                    medicationId: medication.id,
-                    scheduledTime,
-                    takenAt,
-                    status,
-                    notes: status === 'SKIPPED' ? 'Forgot to take' : 
-                           status === 'MISSED' ? 'Was not at home' :
-                           status === 'TAKEN' ? 'Taken as scheduled' : undefined,
-                  }
-                });
+                  await prisma.medicationLog.create({
+                    data: {
+                      medicationId: medication.id,
+                      scheduledTime,
+                      takenAt,
+                      status,
+                      notes: status === 'SKIPPED' ? 'Forgot to take' : 
+                             status === 'MISSED' ? 'Was not at home' :
+                             status === 'TAKEN' ? 'Taken as scheduled' : undefined,
+                    }
+                  });
 
-                medicationLogCount++;
+                  medicationLogCount++;
+                }
               }
             }
           }
+        } catch (medError) {
+          console.error(`❌ Error creating medication ${medData.name}:`, medError);
+          // Continue with other medications
         }
       }
+      
+      console.log(`✅ Created ${medicationCount} medications with ${medicationLogCount} logs`);
 
+      console.log('🎉 Seed process completed successfully!');
+      
       res.status(200).json({
         success: true,
         message: `Successfully created ${createdCount} symptoms and ${medicationCount} medications`,
