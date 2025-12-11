@@ -575,9 +575,15 @@ export class SymptomController {
       });
     } catch (error) {
       console.error('Seed symptoms error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorStack = error instanceof Error ? error.stack : '';
+      console.error('Error details:', { errorMessage, errorStack });
+      
       res.status(500).json({
         success: false,
         error: 'Failed to seed symptoms.',
+        message: process.env.NODE_ENV === 'development' ? errorMessage : 'Failed to seed symptoms.',
+        details: process.env.NODE_ENV === 'development' ? errorStack : undefined,
       });
     }
   }
