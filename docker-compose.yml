@@ -33,7 +33,7 @@ services:
       JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key-change-in-production}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-your-super-secret-refresh-key-change-in-production}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
-      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      FRONTEND_URL: ${FRONTEND_URL:-https://symptomst.adriz.me}
     # Port forwarding to host - accessible from outside
     ports:
       - "5000:5000"
