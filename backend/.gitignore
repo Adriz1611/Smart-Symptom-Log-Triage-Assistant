@@ -36,5 +36,7 @@ temp/
 coverage/
 .nyc_output/
 
-# Prisma
-prisma/migrations/
+# Prisma - DON'T ignore migrations! They should be committed to git
+# Only ignore the generated client
+node_modules/.prisma/
+node_modules/@prisma/

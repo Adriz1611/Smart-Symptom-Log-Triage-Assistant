@@ -20,7 +20,7 @@ COPY tsconfig.json ./
 # Install all dependencies (including dev dependencies)
 RUN npm ci
 
-# Copy source code
+# Copy source code and Prisma files (including migrations)
 COPY prisma ./prisma
 COPY src ./src
 
@@ -45,7 +45,7 @@ COPY --from=deps --chown=nodejs:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=nodejs:nodejs /app/dist ./dist
 COPY --from=builder --chown=nodejs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
 
-# Copy Prisma schema for migrations
+# Copy Prisma schema AND migrations directory for migrations
 COPY --chown=nodejs:nodejs prisma ./prisma
 COPY --chown=nodejs:nodejs package*.json ./
 

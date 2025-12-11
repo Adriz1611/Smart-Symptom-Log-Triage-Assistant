@@ -49,8 +49,6 @@ services:
     networks:
       - symptom-tracker-internal
     restart: unless-stopped
-    volumes:
-      - ./backend/prisma:/app/prisma:ro
 
 networks:
   # Internal isolated network for PostgreSQL and backend communication
